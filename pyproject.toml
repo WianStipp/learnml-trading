@@ -8,6 +8,11 @@ authors = ["WianStipp <stippwian@gmail.com>"]
 python = "^3.8"
 numpy = "^1.20.1"
 pandas = "^1.2.3"
+Backtesting = "^0.3.1"
+black = "^20.8b1"
+mypy = "^0.812"
+pylint = "^2.7.2"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
