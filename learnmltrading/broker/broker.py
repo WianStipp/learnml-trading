@@ -78,8 +78,10 @@ if __name__ == "__main__":
     HOST = "api-fxtrade.oanda.com"
     ACCOUNT_NUMBER = os.environ.get("OANDA_ACCOUNT_NUMBER")
     API_TOKEN = os.environ.get("OANDA_API_TOKEN")
+    INSTRUMENT = "GBP_USD"
+    GRANULARITY = "H4"
+    START = "1611991182"
+    END = "1612250382"
 
-    oanda_broker = OandaBroker(
-        HOST,
-        None,
-    )
+    oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
+    oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
