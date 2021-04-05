@@ -26,10 +26,11 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from abc import ABC
+<pre><code class="python">import os
+from abc import ABC
 import pandas as pd
 import requests
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 JSONType = Dict[str, Any]
 
@@ -39,7 +40,7 @@ class Broker(ABC):
     Abstract class for a broker.
     &#34;&#34;&#34;
 
-    def __init__(self, host: str, port: str) -&gt; None:
+    def __init__(self, host: str, port: Optional[str]) -&gt; None:
         self.host = host
         self.port = port
 
@@ -50,7 +51,7 @@ class OandaBroker(Broker):
     &#34;&#34;&#34;
 
     def __init__(
-        self, host: str, port: str, account_number: str, api_token: str
+        self, host: str, port: Optional[str], account_number: str, api_token: str
     ) -&gt; None:
         super().__init__(host, port)
         self.account_number = account_number
@@ -63,23 +64,20 @@ class OandaBroker(Broker):
         Get the a dataframe of historic prices from the API.
 
         granularity (str): E.g. &#39;H1&#39; or &#39;D&#39;.
-            format specified https://developer.oanda.com/rest-live-v20/instrument-df/ \
-            #CandlestickGranularity
 
         start (int): start of price data, in UNIX seconds.
 
         end (int): end of price data, in UNIX seconds.
         &#34;&#34;&#34;
-
+        json_candles = self._get_json_candles(instrument, granularity, start, end)
+        print(json_candles)
         return pd.DataFrame()
 
-    def _candles_api_request(
+    def _get_json_candles(
         self, instrument: str, granularity: str, start: int, end: int
     ) -&gt; JSONType:
         &#34;&#34;&#34;
         granularity (str): E.g. &#39;H1&#39; or &#39;D&#39;.
-            format specified https://developer.oanda.com/rest-live-v20/instrument-df/ \\
-            #CandlestickGranularity
 
         start (int): start of price data, in UNIX seconds.
 
@@ -101,7 +99,20 @@ class OandaBroker(Broker):
             return json_candles
         except Exception:
             print(response.status_code)
-            print(response.reason)</code></pre>
+            print(response.reason)
+
+
+if __name__ == &#34;__main__&#34;:
+    HOST = &#34;api-fxtrade.oanda.com&#34;
+    ACCOUNT_NUMBER = os.environ.get(&#34;OANDA_ACCOUNT_NUMBER&#34;)
+    API_TOKEN = os.environ.get(&#34;OANDA_API_TOKEN&#34;)
+    INSTRUMENT = &#34;GBP_USD&#34;
+    GRANULARITY = &#34;H4&#34;
+    START = &#34;1611991182&#34;
+    END = &#34;1612250382&#34;
+
+    oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
+    oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)</code></pre>
 </details>
 </section>
 <section>
@@ -115,7 +126,7 @@ class OandaBroker(Broker):
 <dl>
 <dt id="broker.Broker"><code class="flex name class">
 <span>class <span class="ident">Broker</span></span>
-<span>(</span><span>host: str, port: str)</span>
+<span>(</span><span>host: str, port: Union[str, NoneType])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Abstract class for a broker.</p></div>
@@ -128,7 +139,7 @@ class OandaBroker(Broker):
     Abstract class for a broker.
     &#34;&#34;&#34;
 
-    def __init__(self, host: str, port: str) -&gt; None:
+    def __init__(self, host: str, port: Optional[str]) -&gt; None:
         self.host = host
         self.port = port</code></pre>
 </details>
@@ -143,7 +154,7 @@ class OandaBroker(Broker):
 </dd>
 <dt id="broker.OandaBroker"><code class="flex name class">
 <span>class <span class="ident">OandaBroker</span></span>
-<span>(</span><span>host: str, port: str, account_number: str, api_token: str)</span>
+<span>(</span><span>host: str, port: Union[str, NoneType], account_number: str, api_token: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Concrete implementation of Broker, using the OANDA brokerage for FX trading.</p></div>
@@ -157,7 +168,7 @@ class OandaBroker(Broker):
     &#34;&#34;&#34;
 
     def __init__(
-        self, host: str, port: str, account_number: str, api_token: str
+        self, host: str, port: Optional[str], account_number: str, api_token: str
     ) -&gt; None:
         super().__init__(host, port)
         self.account_number = account_number
@@ -170,23 +181,20 @@ class OandaBroker(Broker):
         Get the a dataframe of historic prices from the API.
 
         granularity (str): E.g. &#39;H1&#39; or &#39;D&#39;.
-            format specified https://developer.oanda.com/rest-live-v20/instrument-df/ \
-            #CandlestickGranularity
 
         start (int): start of price data, in UNIX seconds.
 
         end (int): end of price data, in UNIX seconds.
         &#34;&#34;&#34;
-
+        json_candles = self._get_json_candles(instrument, granularity, start, end)
+        print(json_candles)
         return pd.DataFrame()
 
-    def _candles_api_request(
+    def _get_json_candles(
         self, instrument: str, granularity: str, start: int, end: int
     ) -&gt; JSONType:
         &#34;&#34;&#34;
         granularity (str): E.g. &#39;H1&#39; or &#39;D&#39;.
-            format specified https://developer.oanda.com/rest-live-v20/instrument-df/ \\
-            #CandlestickGranularity
 
         start (int): start of price data, in UNIX seconds.
 
@@ -222,9 +230,7 @@ class OandaBroker(Broker):
 </code></dt>
 <dd>
 <div class="desc"><p>Get the a dataframe of historic prices from the API.</p>
-<p>granularity (str): E.g. 'H1' or 'D'.
-format specified <a href="https://developer.oanda.com/rest-live-v20/instrument-df/">https://developer.oanda.com/rest-live-v20/instrument-df/</a>
-#CandlestickGranularity</p>
+<p>granularity (str): E.g. 'H1' or 'D'.</p>
 <p>start (int): start of price data, in UNIX seconds.</p>
 <p>end (int): end of price data, in UNIX seconds.</p></div>
 <details class="source">
@@ -238,14 +244,13 @@ format specified <a href="https://developer.oanda.com/rest-live-v20/instrument-d
     Get the a dataframe of historic prices from the API.
 
     granularity (str): E.g. &#39;H1&#39; or &#39;D&#39;.
-        format specified https://developer.oanda.com/rest-live-v20/instrument-df/ \
-        #CandlestickGranularity
 
     start (int): start of price data, in UNIX seconds.
 
     end (int): end of price data, in UNIX seconds.
     &#34;&#34;&#34;
-
+    json_candles = self._get_json_candles(instrument, granularity, start, end)
+    print(json_candles)
     return pd.DataFrame()</code></pre>
 </details>
 </dd>
