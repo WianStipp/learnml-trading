@@ -1,3 +1,12 @@
+"""
+This file contains code to interact with the broker.
+
+To-do:
+
+- Get bid and ask candles (not mid)
+- Allow larger data queries
+"""
+
 import os
 from abc import ABC
 import pandas as pd
@@ -5,6 +14,7 @@ import requests
 from typing import Dict, Any, Optional
 
 JSONType = Dict[str, Any]
+PRICE_COMPONENTS = "BA"  # get bid and ask candles
 
 
 class Broker(ABC):
@@ -42,8 +52,8 @@ class OandaBroker(Broker):
         end (int): end of price data, in UNIX seconds.
         """
         json_candles = self._get_json_candles(instrument, granularity, start, end)
-        print(json_candles)
-        return pd.DataFrame()
+        df = pd.DataFrame(json_candles)
+        return df
 
     def _get_json_candles(
         self, instrument: str, granularity: str, start: int, end: int
@@ -58,7 +68,12 @@ class OandaBroker(Broker):
         start, end = str(start), str(end)
 
         header = {"Authorization": "Bearer " + self.api_token}
-        query = {"from": start, "to": end, "granularity": granularity}
+        query = {
+            "from": start,
+            "to": end,
+            "granularity": granularity,
+            "price": PRICE_COMPONENTS,
+        }
         candles_path = (
             f"/v3/accounts/{self.account_number}/instruments/{instrument}/candles"
         )
