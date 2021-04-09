@@ -15,6 +15,7 @@ from typing import Dict, Any, Optional
 
 JSONType = Dict[str, Any]
 PRICE_COMPONENTS = "BA"  # get bid and ask candles
+MAX_REQUEST_SIZE = 3000
 
 
 class Broker(ABC):
@@ -52,7 +53,10 @@ class OandaBroker(Broker):
         end (int): end of price data, in UNIX seconds.
         """
         json_candles = self._get_json_candles(instrument, granularity, start, end)
-        df = pd.DataFrame(json_candles)
+        flattened_json_candles = pd.io.json.json_normalize(json_candles)
+        df = pd.DataFrame(flattened_json_candles)
+        df.index = pd.to_datetime(df.time)
+        df.drop(["complete", "volume", "time"], axis=1, inplace=True)
         return df
 
     def _get_json_candles(
@@ -89,14 +93,43 @@ class OandaBroker(Broker):
             print(response.reason)
 
 
+def pd_datetime_to_unix(pd_datetime: pd.Timestamp) -> int:
+    """
+    convert pandas datetime date to UNIX seconds.
+    """
+    return (pd_datetime - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
+
+
+def oanda_to_pandas_freq(granularity: str) -> str:
+    """
+    Format the OANA granularity to be comparible with Pandas.
+
+    For example, 'H4' -> '4H'
+    """
+    if "H" in granularity:
+        return granularity[::-1]
+    elif "M" in granularity:
+        return granularity[1:] + "min"
+
+
 if __name__ == "__main__":
     HOST = "api-fxtrade.oanda.com"
     ACCOUNT_NUMBER = os.environ.get("OANDA_ACCOUNT_NUMBER")
     API_TOKEN = os.environ.get("OANDA_API_TOKEN")
     INSTRUMENT = "GBP_USD"
     GRANULARITY = "H4"
-    START = "1611991182"
-    END = "1612250382"
+    START = pd_datetime_to_unix(pd.to_datetime("2018-12-10"))
+    END = pd_datetime_to_unix(pd.to_datetime("2021-03-01"))
+
+    print(
+        pd.date_range(
+            start=pd.to_datetime(START, unit="s", origin="unix"),
+            end=pd.to_datetime(END, unit="s", origin="unix"),
+            freq=oanda_to_pandas_freq(GRANULARITY),
+        )
+    )
+    exit()
 
     oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
-    oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
+    df = oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
+    print(df)
