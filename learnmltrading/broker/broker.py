@@ -1,10 +1,5 @@
 """
 This file contains code to interact with the broker.
-
-To-do:
-
-- Get bid and ask candles (not mid)
-- Allow larger data queries
 """
 
 import os
