@@ -37,6 +37,20 @@ class OandaBroker(Broker):
         self.account_number = account_number
         self.api_token = api_token
 
+    def _get_sub_historic_price(
+        self, instrument: str, granularity: str, start: int, end: int
+    ) -> pd.DataFrame:
+        """
+        Assuming that the request is valid (and the number of candles
+        > MAX_REQUEST_SIZE), return the dataframe of prices.
+        """
+        json_candles = self._get_json_candles(instrument, granularity, start, end)
+        flattened_json_candles = pd.json_normalize(json_candles)
+        df = pd.DataFrame(flattened_json_candles)
+        df.index = pd.to_datetime(df.time)
+        df.drop(["complete", "volume", "time"], axis=1, inplace=True)
+        return df.astype(float)
+
     def get_historic_prices(
         self, instrument: str, granularity: str, start: int, end: int
     ) -> pd.DataFrame:
@@ -51,12 +65,14 @@ class OandaBroker(Broker):
         """
         start_dt = pd.to_datetime(start, unit="s", origin="unix")
         end_dt = pd.to_datetime(end, unit="s", origin="unix")
-        series = pd.date_range(start_dt, end_dt, freq=oanda_to_pandas_freq(granularity))
+        time_series = pd.date_range(
+            start_dt, end_dt, freq=oanda_to_pandas_freq(granularity)
+        )
 
-        query_timestamps = series[::MAX_REQUEST_SIZE].to_list()
+        query_timestamps = time_series[::MAX_REQUEST_SIZE].to_list()
         query_timestamps = (
-            query_timestamps + [series[-1]]
-            if query_timestamps[-1] != series[-1]
+            query_timestamps + [time_series[-1]]
+            if query_timestamps[-1] != time_series[-1]
             else query_timestamps
         )
 
@@ -64,17 +80,13 @@ class OandaBroker(Broker):
         for i in range(len(query_timestamps) - 1):
             sub_start = pd_datetime_to_unix(query_timestamps[i])
             sub_end = pd_datetime_to_unix(query_timestamps[i + 1])
-            json_candles = self._get_json_candles(
-                instrument, granularity, sub_start, sub_end
+            dfs.append(
+                self._get_sub_historic_price(
+                    instrument, granularity, sub_start, sub_end
+                )
             )
-            flattened_json_candles = pd.json_normalize(json_candles)
-            df = pd.DataFrame(flattened_json_candles)
-            df.index = pd.to_datetime(df.time)
-            df.drop(["complete", "volume", "time"], axis=1, inplace=True)
-            dfs.append(df.astype(float))
             time.sleep(REQUEST_SLEEP)
-
-        df = pd.concat(dfs, axis=1)
+        df = pd.concat(dfs, axis=0)
         return df
 
     def _get_json_candles(
@@ -136,10 +148,11 @@ if __name__ == "__main__":
     API_TOKEN = os.environ.get("OANDA_API_TOKEN")
     INSTRUMENT = "GBP_USD"
     GRANULARITY = "H4"
-    START = pd_datetime_to_unix(pd.to_datetime("2010-12-10"))
+    START = pd_datetime_to_unix(pd.to_datetime("2015-12-10"))
     END = pd_datetime_to_unix(pd.to_datetime("2021-03-01"))
 
     oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
     df = oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
 
     print(df.head())
+    print(df.shape)
