@@ -13,7 +13,6 @@ from abc import ABC
 import pandas as pd
 import requests
 from typing import Dict, Any, Optional
-import matplotlib.pyplot as plt
 
 JSONType = Dict[str, Any]
 PRICE_COMPONENTS = "BA"  # get bid and ask candles
@@ -148,6 +147,4 @@ if __name__ == "__main__":
     oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
     df = oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
 
-    fig = plt.figure()
-    plt.plot(df["bid.o"])
-    plt.show()
+    print(df.head())
