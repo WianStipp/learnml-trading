@@ -8,14 +8,17 @@ To-do:
 """
 
 import os
+import time
 from abc import ABC
 import pandas as pd
 import requests
 from typing import Dict, Any, Optional
+import matplotlib.pyplot as plt
 
 JSONType = Dict[str, Any]
 PRICE_COMPONENTS = "BA"  # get bid and ask candles
-MAX_REQUEST_SIZE = 3000
+MAX_REQUEST_SIZE = 2500
+REQUEST_SLEEP = 1.0
 
 
 class Broker(ABC):
@@ -52,11 +55,32 @@ class OandaBroker(Broker):
 
         end (int): end of price data, in UNIX seconds.
         """
-        json_candles = self._get_json_candles(instrument, granularity, start, end)
-        flattened_json_candles = pd.io.json.json_normalize(json_candles)
-        df = pd.DataFrame(flattened_json_candles)
-        df.index = pd.to_datetime(df.time)
-        df.drop(["complete", "volume", "time"], axis=1, inplace=True)
+        start_dt = pd.to_datetime(start, unit="s", origin="unix")
+        end_dt = pd.to_datetime(end, unit="s", origin="unix")
+        series = pd.date_range(start_dt, end_dt, freq=oanda_to_pandas_freq(granularity))
+
+        query_timestamps = series[::MAX_REQUEST_SIZE].to_list()
+        query_timestamps = (
+            query_timestamps + [series[-1]]
+            if query_timestamps[-1] != series[-1]
+            else query_timestamps
+        )
+
+        dfs = []
+        for i in range(len(query_timestamps) - 1):
+            sub_start = pd_datetime_to_unix(query_timestamps[i])
+            sub_end = pd_datetime_to_unix(query_timestamps[i + 1])
+            json_candles = self._get_json_candles(
+                instrument, granularity, sub_start, sub_end
+            )
+            flattened_json_candles = pd.json_normalize(json_candles)
+            df = pd.DataFrame(flattened_json_candles)
+            df.index = pd.to_datetime(df.time)
+            df.drop(["complete", "volume", "time"], axis=1, inplace=True)
+            dfs.append(df.astype(float))
+            time.sleep(REQUEST_SLEEP)
+
+        df = pd.concat(dfs, axis=1)
         return df
 
     def _get_json_candles(
@@ -118,18 +142,12 @@ if __name__ == "__main__":
     API_TOKEN = os.environ.get("OANDA_API_TOKEN")
     INSTRUMENT = "GBP_USD"
     GRANULARITY = "H4"
-    START = pd_datetime_to_unix(pd.to_datetime("2018-12-10"))
+    START = pd_datetime_to_unix(pd.to_datetime("2010-12-10"))
     END = pd_datetime_to_unix(pd.to_datetime("2021-03-01"))
-
-    print(
-        pd.date_range(
-            start=pd.to_datetime(START, unit="s", origin="unix"),
-            end=pd.to_datetime(END, unit="s", origin="unix"),
-            freq=oanda_to_pandas_freq(GRANULARITY),
-        )
-    )
-    exit()
 
     oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
     df = oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
-    print(df)
+
+    fig = plt.figure()
+    plt.plot(df["bid.o"])
+    plt.show()
