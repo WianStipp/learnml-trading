@@ -63,8 +63,9 @@ class OandaBroker(Broker):
 
         end (int): end of price data, in UNIX seconds.
         """
-        start_dt = pd.to_datetime(start, unit="s", origin="unix")
-        end_dt = pd.to_datetime(end, unit="s", origin="unix")
+        start_dt, end_dt = (
+            pd.to_datetime(ts, unit="s", origin="unix") for ts in (start, end)
+        )
         time_series = pd.date_range(
             start_dt, end_dt, freq=oanda_to_pandas_freq(granularity)
         )
@@ -86,6 +87,7 @@ class OandaBroker(Broker):
                 )
             )
             time.sleep(REQUEST_SLEEP)
+
         df = pd.concat(dfs, axis=0)
         return df
 
