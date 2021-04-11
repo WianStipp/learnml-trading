@@ -9,6 +9,11 @@ import pandas as pd
 import requests
 from typing import Dict, Any, Optional
 
+from learnmltrading.src.utils.time_conversion import (
+    oanda_to_pandas_freq,
+    pd_datetime_to_unix,
+)
+
 JSONType = Dict[str, Any]
 PRICE_COMPONENTS = "BA"  # get bid and ask candles
 MAX_REQUEST_SIZE = 2500
@@ -123,25 +128,6 @@ class OandaBroker(Broker):
         except Exception:
             print(response.status_code)
             print(response.reason)
-
-
-def pd_datetime_to_unix(pd_datetime: pd.Timestamp) -> int:
-    """
-    convert pandas datetime date to UNIX seconds.
-    """
-    return (pd_datetime - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
-
-
-def oanda_to_pandas_freq(granularity: str) -> str:
-    """
-    Format the OANA granularity to be comparible with Pandas.
-
-    For example, 'H4' -> '4H'
-    """
-    if "H" in granularity:
-        return granularity[::-1]
-    elif "M" in granularity:
-        return granularity[1:] + "min"
 
 
 if __name__ == "__main__":
