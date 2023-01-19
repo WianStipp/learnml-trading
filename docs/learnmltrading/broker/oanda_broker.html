@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
-<title>src.broker.broker API documentation</title>
-<meta name="description" content="This file contains code to interact with the broker." />
+<title>learnmltrading.broker.oanda_broker API documentation</title>
+<meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,29 +19,22 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>src.broker.broker</code></h1>
+<h1 class="title">Module <code>learnmltrading.broker.oanda_broker</code></h1>
 </header>
 <section id="section-intro">
-<p>This file contains code to interact with the broker.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34;
-This file contains code to interact with the broker.
-&#34;&#34;&#34;
-
+<pre><code class="python">from typing import Optional, Dict, Any
 import os
 import time
-from abc import ABC
 import pandas as pd
 import requests
-from typing import Dict, Any, Optional
+import matplotlib.pyplot as plt
 
-from learnmltrading.src.utils.time_conversion import (
-    oanda_to_pandas_freq,
-    pd_datetime_to_unix,
-)
+from learnmltrading.utils import time_conversion
+from learnmltrading.broker import broker
 
 JSONType = Dict[str, Any]
 PRICE_COMPONENTS = &#34;BA&#34;  # get bid and ask candles
@@ -49,17 +42,7 @@ MAX_REQUEST_SIZE = 2500
 REQUEST_SLEEP = 1.0
 
 
-class Broker(ABC):
-    &#34;&#34;&#34;
-    Abstract class for a broker.
-    &#34;&#34;&#34;
-
-    def __init__(self, host: str, port: Optional[str]) -&gt; None:
-        self.host = host
-        self.port = port
-
-
-class OandaBroker(Broker):
+class OandaBroker(broker.Broker):
     &#34;&#34;&#34;
     Concrete implementation of Broker, using the OANDA brokerage for FX trading.
     &#34;&#34;&#34;
@@ -70,20 +53,6 @@ class OandaBroker(Broker):
         super().__init__(host, port)
         self.account_number = account_number
         self.api_token = api_token
-
-    def _get_sub_historic_price(
-        self, instrument: str, granularity: str, start: int, end: int
-    ) -&gt; pd.DataFrame:
-        &#34;&#34;&#34;
-        Assuming that the request is valid (and the number of candles
-        &gt; MAX_REQUEST_SIZE), return the dataframe of prices.
-        &#34;&#34;&#34;
-        json_candles = self._get_json_candles(instrument, granularity, start, end)
-        flattened_json_candles = pd.json_normalize(json_candles)
-        df = pd.DataFrame(flattened_json_candles)
-        df.index = pd.to_datetime(df.time)
-        df.drop([&#34;complete&#34;, &#34;volume&#34;, &#34;time&#34;], axis=1, inplace=True)
-        return df.astype(float)
 
     def get_historic_prices(
         self, instrument: str, granularity: str, start: int, end: int
@@ -101,7 +70,7 @@ class OandaBroker(Broker):
             pd.to_datetime(ts, unit=&#34;s&#34;, origin=&#34;unix&#34;) for ts in (start, end)
         )
         time_series = pd.date_range(
-            start_dt, end_dt, freq=oanda_to_pandas_freq(granularity)
+            start_dt, end_dt, freq=time_conversion.oanda_to_pandas_freq(granularity)
         )
 
         query_timestamps = time_series[::MAX_REQUEST_SIZE].to_list()
@@ -113,17 +82,30 @@ class OandaBroker(Broker):
 
         dfs = []
         for i in range(len(query_timestamps) - 1):
-            sub_start = pd_datetime_to_unix(query_timestamps[i])
-            sub_end = pd_datetime_to_unix(query_timestamps[i + 1])
+            sub_start = time_conversion.pd_datetime_to_unix(query_timestamps[i])
+            sub_end = time_conversion.pd_datetime_to_unix(query_timestamps[i + 1])
             dfs.append(
                 self._get_sub_historic_price(
                     instrument, granularity, sub_start, sub_end
                 )
             )
             time.sleep(REQUEST_SLEEP)
-
         df = pd.concat(dfs, axis=0)
         return df
+
+    def _get_sub_historic_price(
+        self, instrument: str, granularity: str, start: int, end: int
+    ) -&gt; pd.DataFrame:
+        &#34;&#34;&#34;
+        Assuming that the request is valid (and the number of candles
+        &gt; MAX_REQUEST_SIZE), return the dataframe of prices.
+        &#34;&#34;&#34;
+        json_candles = self._get_json_candles(instrument, granularity, start, end)
+        flattened_json_candles = pd.json_normalize(json_candles)
+        df = pd.DataFrame(flattened_json_candles)
+        df.index = pd.to_datetime(df.time)
+        df.drop([&#34;complete&#34;, &#34;volume&#34;, &#34;time&#34;], axis=1, inplace=True)
+        return df.astype(float)
 
     def _get_json_candles(
         self, instrument: str, granularity: str, start: int, end: int
@@ -165,12 +147,14 @@ if __name__ == &#34;__main__&#34;:
     API_TOKEN = os.environ.get(&#34;OANDA_API_TOKEN&#34;)
     INSTRUMENT = &#34;GBP_USD&#34;
     GRANULARITY = &#34;H4&#34;
-    START = pd_datetime_to_unix(pd.to_datetime(&#34;2015-12-10&#34;))
-    END = pd_datetime_to_unix(pd.to_datetime(&#34;2021-03-01&#34;))
+    START = time_conversion.pd_datetime_to_unix(pd.to_datetime(&#34;2015-12-10&#34;))
+    END = time_conversion.pd_datetime_to_unix(pd.to_datetime(&#34;2021-03-01&#34;))
 
     oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
     df = oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
 
+    plt.plot(df[&#34;bid.c&#34;])
+    plt.show()
     print(df.head())
     print(df.shape)</code></pre>
 </details>
@@ -184,37 +168,9 @@ if __name__ == &#34;__main__&#34;:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="src.broker.broker.Broker"><code class="flex name class">
-<span>class <span class="ident">Broker</span></span>
-<span>(</span><span>host: str, port: Union[str, NoneType])</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Abstract class for a broker.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class Broker(ABC):
-    &#34;&#34;&#34;
-    Abstract class for a broker.
-    &#34;&#34;&#34;
-
-    def __init__(self, host: str, port: Optional[str]) -&gt; None:
-        self.host = host
-        self.port = port</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>abc.ABC</li>
-</ul>
-<h3>Subclasses</h3>
-<ul class="hlist">
-<li><a title="src.broker.broker.OandaBroker" href="#src.broker.broker.OandaBroker">OandaBroker</a></li>
-</ul>
-</dd>
-<dt id="src.broker.broker.OandaBroker"><code class="flex name class">
+<dt id="learnmltrading.broker.oanda_broker.OandaBroker"><code class="flex name class">
 <span>class <span class="ident">OandaBroker</span></span>
-<span>(</span><span>host: str, port: Union[str, NoneType], account_number: str, api_token: str)</span>
+<span>(</span><span>host: str, port: Optional[str], account_number: str, api_token: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Concrete implementation of Broker, using the OANDA brokerage for FX trading.</p></div>
@@ -222,7 +178,7 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class OandaBroker(Broker):
+<pre><code class="python">class OandaBroker(broker.Broker):
     &#34;&#34;&#34;
     Concrete implementation of Broker, using the OANDA brokerage for FX trading.
     &#34;&#34;&#34;
@@ -233,20 +189,6 @@ if __name__ == &#34;__main__&#34;:
         super().__init__(host, port)
         self.account_number = account_number
         self.api_token = api_token
-
-    def _get_sub_historic_price(
-        self, instrument: str, granularity: str, start: int, end: int
-    ) -&gt; pd.DataFrame:
-        &#34;&#34;&#34;
-        Assuming that the request is valid (and the number of candles
-        &gt; MAX_REQUEST_SIZE), return the dataframe of prices.
-        &#34;&#34;&#34;
-        json_candles = self._get_json_candles(instrument, granularity, start, end)
-        flattened_json_candles = pd.json_normalize(json_candles)
-        df = pd.DataFrame(flattened_json_candles)
-        df.index = pd.to_datetime(df.time)
-        df.drop([&#34;complete&#34;, &#34;volume&#34;, &#34;time&#34;], axis=1, inplace=True)
-        return df.astype(float)
 
     def get_historic_prices(
         self, instrument: str, granularity: str, start: int, end: int
@@ -264,7 +206,7 @@ if __name__ == &#34;__main__&#34;:
             pd.to_datetime(ts, unit=&#34;s&#34;, origin=&#34;unix&#34;) for ts in (start, end)
         )
         time_series = pd.date_range(
-            start_dt, end_dt, freq=oanda_to_pandas_freq(granularity)
+            start_dt, end_dt, freq=time_conversion.oanda_to_pandas_freq(granularity)
         )
 
         query_timestamps = time_series[::MAX_REQUEST_SIZE].to_list()
@@ -276,17 +218,30 @@ if __name__ == &#34;__main__&#34;:
 
         dfs = []
         for i in range(len(query_timestamps) - 1):
-            sub_start = pd_datetime_to_unix(query_timestamps[i])
-            sub_end = pd_datetime_to_unix(query_timestamps[i + 1])
+            sub_start = time_conversion.pd_datetime_to_unix(query_timestamps[i])
+            sub_end = time_conversion.pd_datetime_to_unix(query_timestamps[i + 1])
             dfs.append(
                 self._get_sub_historic_price(
                     instrument, granularity, sub_start, sub_end
                 )
             )
             time.sleep(REQUEST_SLEEP)
-
         df = pd.concat(dfs, axis=0)
         return df
+
+    def _get_sub_historic_price(
+        self, instrument: str, granularity: str, start: int, end: int
+    ) -&gt; pd.DataFrame:
+        &#34;&#34;&#34;
+        Assuming that the request is valid (and the number of candles
+        &gt; MAX_REQUEST_SIZE), return the dataframe of prices.
+        &#34;&#34;&#34;
+        json_candles = self._get_json_candles(instrument, granularity, start, end)
+        flattened_json_candles = pd.json_normalize(json_candles)
+        df = pd.DataFrame(flattened_json_candles)
+        df.index = pd.to_datetime(df.time)
+        df.drop([&#34;complete&#34;, &#34;volume&#34;, &#34;time&#34;], axis=1, inplace=True)
+        return df.astype(float)
 
     def _get_json_candles(
         self, instrument: str, granularity: str, start: int, end: int
@@ -323,12 +278,12 @@ if __name__ == &#34;__main__&#34;:
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="src.broker.broker.Broker" href="#src.broker.broker.Broker">Broker</a></li>
+<li><a title="learnmltrading.broker.broker.Broker" href="broker.html#learnmltrading.broker.broker.Broker">Broker</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="src.broker.broker.OandaBroker.get_historic_prices"><code class="name flex">
+<dt id="learnmltrading.broker.oanda_broker.OandaBroker.get_historic_prices"><code class="name flex">
 <span>def <span class="ident">get_historic_prices</span></span>(<span>self, instrument: str, granularity: str, start: int, end: int) ‑> pandas.core.frame.DataFrame</span>
 </code></dt>
 <dd>
@@ -356,7 +311,7 @@ if __name__ == &#34;__main__&#34;:
         pd.to_datetime(ts, unit=&#34;s&#34;, origin=&#34;unix&#34;) for ts in (start, end)
     )
     time_series = pd.date_range(
-        start_dt, end_dt, freq=oanda_to_pandas_freq(granularity)
+        start_dt, end_dt, freq=time_conversion.oanda_to_pandas_freq(granularity)
     )
 
     query_timestamps = time_series[::MAX_REQUEST_SIZE].to_list()
@@ -368,15 +323,14 @@ if __name__ == &#34;__main__&#34;:
 
     dfs = []
     for i in range(len(query_timestamps) - 1):
-        sub_start = pd_datetime_to_unix(query_timestamps[i])
-        sub_end = pd_datetime_to_unix(query_timestamps[i + 1])
+        sub_start = time_conversion.pd_datetime_to_unix(query_timestamps[i])
+        sub_end = time_conversion.pd_datetime_to_unix(query_timestamps[i + 1])
         dfs.append(
             self._get_sub_historic_price(
                 instrument, granularity, sub_start, sub_end
             )
         )
         time.sleep(REQUEST_SLEEP)
-
     df = pd.concat(dfs, axis=0)
     return df</code></pre>
 </details>
@@ -394,18 +348,15 @@ if __name__ == &#34;__main__&#34;:
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="src.broker" href="index.html">src.broker</a></code></li>
+<li><code><a title="learnmltrading.broker" href="index.html">learnmltrading.broker</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="src.broker.broker.Broker" href="#src.broker.broker.Broker">Broker</a></code></h4>
-</li>
-<li>
-<h4><code><a title="src.broker.broker.OandaBroker" href="#src.broker.broker.OandaBroker">OandaBroker</a></code></h4>
+<h4><code><a title="learnmltrading.broker.oanda_broker.OandaBroker" href="#learnmltrading.broker.oanda_broker.OandaBroker">OandaBroker</a></code></h4>
 <ul class="">
-<li><code><a title="src.broker.broker.OandaBroker.get_historic_prices" href="#src.broker.broker.OandaBroker.get_historic_prices">get_historic_prices</a></code></li>
+<li><code><a title="learnmltrading.broker.oanda_broker.OandaBroker.get_historic_prices" href="#learnmltrading.broker.oanda_broker.OandaBroker.get_historic_prices">get_historic_prices</a></code></li>
 </ul>
 </li>
 </ul>

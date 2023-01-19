@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>learnmltrading.scripts.backtesting_oanda_data API documentation</title>
+<meta name="description" content="This script tests out using the Backtesting.py package with our own data from OANDA.
+Most of this script is taken from the Backtesting.py docs." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>learnmltrading.scripts.backtesting_oanda_data</code></h1>
+</header>
+<section id="section-intro">
+<p>This script tests out using the Backtesting.py package with our own data from OANDA.
+Most of this script is taken from the Backtesting.py docs.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+This script tests out using the Backtesting.py package with our own data from OANDA.
+Most of this script is taken from the Backtesting.py docs.
+&#34;&#34;&#34;
+import pandas as pd
+from backtesting import Backtest, Strategy
+from backtesting.lib import crossover
+
+from learnmltrading.broker.oanda_broker import OandaBroker
+from learnmltrading.utils.config import Config
+from learnmltrading.utils.time_conversion import pd_datetime_to_unix
+
+OANDA_HOST = &#34;api-fxtrade.oanda.com&#34;
+START = pd_datetime_to_unix(pd.to_datetime(&#34;2019-12-10&#34;))
+END = pd_datetime_to_unix(pd.to_datetime(&#34;2021-03-01&#34;))
+INSTRUMENT = &#34;EUR_USD&#34;
+GRANULARITY = &#34;H8&#34;
+REQUIRED_COLS = (&#34;Open&#34;, &#34;High&#34;, &#34;Low&#34;, &#34;Close&#34;)
+OANDA_CORRESPONDING_COLS = (&#34;ask.o&#34;, &#34;ask.h&#34;, &#34;ask.l&#34;, &#34;ask.c&#34;)
+
+
+def SMA(values, n):
+    &#34;&#34;&#34;
+    Return simple moving average of `values`, at
+    each step taking into account `n` previous values.
+    &#34;&#34;&#34;
+    return pd.Series(values).rolling(n).mean()
+
+
+class SmaCross(Strategy):
+    # Define the two MA lags as *class variables*
+    # for later optimization
+    n1 = 10
+    n2 = 20
+
+    def init(self):
+        # Precompute the two moving averages
+        self.sma1 = self.I(SMA, self.data.Close, self.n1)
+        self.sma2 = self.I(SMA, self.data.Close, self.n2)
+
+    def next(self):
+        # If sma1 crosses above sma2, close any existing
+        # short trades, and buy the asset
+        if crossover(self.sma1, self.sma2):
+            self.position.close()
+            self.buy()
+
+        # Else, if sma1 crosses below sma2, close any existing
+        # long trades, and sell the asset
+        elif crossover(self.sma2, self.sma1):
+            self.position.close()
+            self.sell()
+
+
+def format_prices_df(df: pd.DataFrame) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    Format prices dataframe from OANDA for Backtesting.py
+    &#34;&#34;&#34;
+    df = df[list(OANDA_CORRESPONDING_COLS)]
+    df.columns = REQUIRED_COLS
+    return df
+
+
+def main() -&gt; None:
+    config = Config(
+        {
+            &#34;OANDA_ACCOUNT_NUMBER&#34;: &#34;account number for OANDA&#34;,
+            &#34;OANDA_API_TOKEN&#34;: &#34;api token for OANDA account&#34;,
+        }
+    )
+    broker = OandaBroker(
+        OANDA_HOST, None, config.OANDA_ACCOUNT_NUMBER, config.OANDA_API_TOKEN
+    )
+    eur_usd = broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
+    eur_usd = format_prices_df(eur_usd)
+
+    backtest = Backtest(eur_usd, SmaCross, cash=10_000, commission=0.02)
+    stats = backtest.run()
+    print(stats)
+
+    backtest.plot()
+
+
+if __name__ == &#34;__main__&#34;:
+    main()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.SMA"><code class="name flex">
+<span>def <span class="ident">SMA</span></span>(<span>values, n)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return simple moving average of <code>values</code>, at
+each step taking into account <code>n</code> previous values.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SMA(values, n):
+    &#34;&#34;&#34;
+    Return simple moving average of `values`, at
+    each step taking into account `n` previous values.
+    &#34;&#34;&#34;
+    return pd.Series(values).rolling(n).mean()</code></pre>
+</details>
+</dd>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.format_prices_df"><code class="name flex">
+<span>def <span class="ident">format_prices_df</span></span>(<span>df: pandas.core.frame.DataFrame) ‑> pandas.core.frame.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Format prices dataframe from OANDA for Backtesting.py</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_prices_df(df: pd.DataFrame) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    Format prices dataframe from OANDA for Backtesting.py
+    &#34;&#34;&#34;
+    df = df[list(OANDA_CORRESPONDING_COLS)]
+    df.columns = REQUIRED_COLS
+    return df</code></pre>
+</details>
+</dd>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main() -&gt; None:
+    config = Config(
+        {
+            &#34;OANDA_ACCOUNT_NUMBER&#34;: &#34;account number for OANDA&#34;,
+            &#34;OANDA_API_TOKEN&#34;: &#34;api token for OANDA account&#34;,
+        }
+    )
+    broker = OandaBroker(
+        OANDA_HOST, None, config.OANDA_ACCOUNT_NUMBER, config.OANDA_API_TOKEN
+    )
+    eur_usd = broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
+    eur_usd = format_prices_df(eur_usd)
+
+    backtest = Backtest(eur_usd, SmaCross, cash=10_000, commission=0.02)
+    stats = backtest.run()
+    print(stats)
+
+    backtest.plot()</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.SmaCross"><code class="flex name class">
+<span>class <span class="ident">SmaCross</span></span>
+<span>(</span><span>broker, data, params)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A trading strategy base class. Extend this class and
+override methods
+<code>backtesting.backtesting.Strategy.init</code> and
+<code>backtesting.backtesting.Strategy.next</code> to define
+your own strategy.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SmaCross(Strategy):
+    # Define the two MA lags as *class variables*
+    # for later optimization
+    n1 = 10
+    n2 = 20
+
+    def init(self):
+        # Precompute the two moving averages
+        self.sma1 = self.I(SMA, self.data.Close, self.n1)
+        self.sma2 = self.I(SMA, self.data.Close, self.n2)
+
+    def next(self):
+        # If sma1 crosses above sma2, close any existing
+        # short trades, and buy the asset
+        if crossover(self.sma1, self.sma2):
+            self.position.close()
+            self.buy()
+
+        # Else, if sma1 crosses below sma2, close any existing
+        # long trades, and sell the asset
+        elif crossover(self.sma2, self.sma1):
+            self.position.close()
+            self.sell()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>backtesting.backtesting.Strategy</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.SmaCross.n1"><code class="name">var <span class="ident">n1</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.SmaCross.n2"><code class="name">var <span class="ident">n2</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.SmaCross.init"><code class="name flex">
+<span>def <span class="ident">init</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the strategy.
+Override this method.
+Declare indicators (with <code>backtesting.backtesting.Strategy.I</code>).
+Precompute what needs to be precomputed or can be precomputed
+in a vectorized fashion before the strategy starts.</p>
+<p>If you extend composable strategies from <code>backtesting.lib</code>,
+make sure to call:</p>
+<pre><code>super().init()
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init(self):
+    # Precompute the two moving averages
+    self.sma1 = self.I(SMA, self.data.Close, self.n1)
+    self.sma2 = self.I(SMA, self.data.Close, self.n2)</code></pre>
+</details>
+</dd>
+<dt id="learnmltrading.scripts.backtesting_oanda_data.SmaCross.next"><code class="name flex">
+<span>def <span class="ident">next</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Main strategy runtime method, called as each new
+<code>backtesting.backtesting.Strategy.data</code>
+instance (row; full candlestick bar) becomes available.
+This is the main method where strategy decisions
+upon data precomputed in <code>backtesting.backtesting.Strategy.init</code>
+take place.</p>
+<p>If you extend composable strategies from <code>backtesting.lib</code>,
+make sure to call:</p>
+<pre><code>super().next()
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def next(self):
+    # If sma1 crosses above sma2, close any existing
+    # short trades, and buy the asset
+    if crossover(self.sma1, self.sma2):
+        self.position.close()
+        self.buy()
+
+    # Else, if sma1 crosses below sma2, close any existing
+    # long trades, and sell the asset
+    elif crossover(self.sma2, self.sma1):
+        self.position.close()
+        self.sell()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="learnmltrading.scripts" href="index.html">learnmltrading.scripts</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="learnmltrading.scripts.backtesting_oanda_data.SMA" href="#learnmltrading.scripts.backtesting_oanda_data.SMA">SMA</a></code></li>
+<li><code><a title="learnmltrading.scripts.backtesting_oanda_data.format_prices_df" href="#learnmltrading.scripts.backtesting_oanda_data.format_prices_df">format_prices_df</a></code></li>
+<li><code><a title="learnmltrading.scripts.backtesting_oanda_data.main" href="#learnmltrading.scripts.backtesting_oanda_data.main">main</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="learnmltrading.scripts.backtesting_oanda_data.SmaCross" href="#learnmltrading.scripts.backtesting_oanda_data.SmaCross">SmaCross</a></code></h4>
+<ul class="">
+<li><code><a title="learnmltrading.scripts.backtesting_oanda_data.SmaCross.init" href="#learnmltrading.scripts.backtesting_oanda_data.SmaCross.init">init</a></code></li>
+<li><code><a title="learnmltrading.scripts.backtesting_oanda_data.SmaCross.n1" href="#learnmltrading.scripts.backtesting_oanda_data.SmaCross.n1">n1</a></code></li>
+<li><code><a title="learnmltrading.scripts.backtesting_oanda_data.SmaCross.n2" href="#learnmltrading.scripts.backtesting_oanda_data.SmaCross.n2">n2</a></code></li>
+<li><code><a title="learnmltrading.scripts.backtesting_oanda_data.SmaCross.next" href="#learnmltrading.scripts.backtesting_oanda_data.SmaCross.next">next</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
