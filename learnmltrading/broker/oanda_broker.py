@@ -1,18 +1,12 @@
-"""
-This file contains code to interact with the broker.
-"""
-
+from typing import Optional, Dict, Any
 import os
 import time
-from abc import ABC
 import pandas as pd
 import requests
-from typing import Dict, Any, Optional
+import matplotlib.pyplot as plt
 
-from learnmltrading.src.utils.time_conversion import (
-    oanda_to_pandas_freq,
-    pd_datetime_to_unix,
-)
+from learnmltrading.utils import time_conversion
+from learnmltrading.broker import broker
 
 JSONType = Dict[str, Any]
 PRICE_COMPONENTS = "BA"  # get bid and ask candles
@@ -20,17 +14,7 @@ MAX_REQUEST_SIZE = 2500
 REQUEST_SLEEP = 1.0
 
 
-class Broker(ABC):
-    """
-    Abstract class for a broker.
-    """
-
-    def __init__(self, host: str, port: Optional[str]) -> None:
-        self.host = host
-        self.port = port
-
-
-class OandaBroker(Broker):
+class OandaBroker(broker.Broker):
     """
     Concrete implementation of Broker, using the OANDA brokerage for FX trading.
     """
@@ -41,20 +25,6 @@ class OandaBroker(Broker):
         super().__init__(host, port)
         self.account_number = account_number
         self.api_token = api_token
-
-    def _get_sub_historic_price(
-        self, instrument: str, granularity: str, start: int, end: int
-    ) -> pd.DataFrame:
-        """
-        Assuming that the request is valid (and the number of candles
-        > MAX_REQUEST_SIZE), return the dataframe of prices.
-        """
-        json_candles = self._get_json_candles(instrument, granularity, start, end)
-        flattened_json_candles = pd.json_normalize(json_candles)
-        df = pd.DataFrame(flattened_json_candles)
-        df.index = pd.to_datetime(df.time)
-        df.drop(["complete", "volume", "time"], axis=1, inplace=True)
-        return df.astype(float)
 
     def get_historic_prices(
         self, instrument: str, granularity: str, start: int, end: int
@@ -72,7 +42,7 @@ class OandaBroker(Broker):
             pd.to_datetime(ts, unit="s", origin="unix") for ts in (start, end)
         )
         time_series = pd.date_range(
-            start_dt, end_dt, freq=oanda_to_pandas_freq(granularity)
+            start_dt, end_dt, freq=time_conversion.oanda_to_pandas_freq(granularity)
         )
 
         query_timestamps = time_series[::MAX_REQUEST_SIZE].to_list()
@@ -84,17 +54,30 @@ class OandaBroker(Broker):
 
         dfs = []
         for i in range(len(query_timestamps) - 1):
-            sub_start = pd_datetime_to_unix(query_timestamps[i])
-            sub_end = pd_datetime_to_unix(query_timestamps[i + 1])
+            sub_start = time_conversion.pd_datetime_to_unix(query_timestamps[i])
+            sub_end = time_conversion.pd_datetime_to_unix(query_timestamps[i + 1])
             dfs.append(
                 self._get_sub_historic_price(
                     instrument, granularity, sub_start, sub_end
                 )
             )
             time.sleep(REQUEST_SLEEP)
-
         df = pd.concat(dfs, axis=0)
         return df
+
+    def _get_sub_historic_price(
+        self, instrument: str, granularity: str, start: int, end: int
+    ) -> pd.DataFrame:
+        """
+        Assuming that the request is valid (and the number of candles
+        > MAX_REQUEST_SIZE), return the dataframe of prices.
+        """
+        json_candles = self._get_json_candles(instrument, granularity, start, end)
+        flattened_json_candles = pd.json_normalize(json_candles)
+        df = pd.DataFrame(flattened_json_candles)
+        df.index = pd.to_datetime(df.time)
+        df.drop(["complete", "volume", "time"], axis=1, inplace=True)
+        return df.astype(float)
 
     def _get_json_candles(
         self, instrument: str, granularity: str, start: int, end: int
@@ -136,11 +119,13 @@ if __name__ == "__main__":
     API_TOKEN = os.environ.get("OANDA_API_TOKEN")
     INSTRUMENT = "GBP_USD"
     GRANULARITY = "H4"
-    START = pd_datetime_to_unix(pd.to_datetime("2015-12-10"))
-    END = pd_datetime_to_unix(pd.to_datetime("2021-03-01"))
+    START = time_conversion.pd_datetime_to_unix(pd.to_datetime("2015-12-10"))
+    END = time_conversion.pd_datetime_to_unix(pd.to_datetime("2021-03-01"))
 
     oanda_broker = OandaBroker(HOST, None, ACCOUNT_NUMBER, API_TOKEN)
     df = oanda_broker.get_historic_prices(INSTRUMENT, GRANULARITY, START, END)
 
+    plt.plot(df["bid.c"])
+    plt.show()
     print(df.head())
     print(df.shape)

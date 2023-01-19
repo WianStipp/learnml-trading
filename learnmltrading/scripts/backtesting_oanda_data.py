@@ -6,9 +6,9 @@ import pandas as pd
 from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
 
-from learnmltrading.src.broker.broker import OandaBroker
-from learnmltrading.src.utils.config import Config
-from learnmltrading.src.utils.time_conversion import pd_datetime_to_unix
+from learnmltrading.broker.oanda_broker import OandaBroker
+from learnmltrading.utils.config import Config
+from learnmltrading.utils.time_conversion import pd_datetime_to_unix
 
 OANDA_HOST = "api-fxtrade.oanda.com"
 START = pd_datetime_to_unix(pd.to_datetime("2019-12-10"))
