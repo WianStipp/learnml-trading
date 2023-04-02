@@ -14,6 +14,8 @@ pylint = "^2.7.2"
 requests = "^2.25.1"
 matplotlib = "^3.4.1"
 mypy = "^0.931"
+pydantic = "^1.10.7"
+httpx = "^0.23.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

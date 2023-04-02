@@ -1,4 +1,5 @@
 # Custom
+.python-version
 *environment_vars*
 .env
 .vscode/
