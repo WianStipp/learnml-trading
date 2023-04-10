@@ -5,6 +5,7 @@ LearnMLTrading is a series where we build and deploy a machine learning trading 
 ## Brokers:
 
 - [X] OANDA
+- [ ] IG
 
 ## Documentation
 
