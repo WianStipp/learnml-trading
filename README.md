@@ -1,4 +1,4 @@
-# LearnMLTrading
+# LearnMLTrading - work in progress
 
 LearnMLTrading is a series where we build and deploy a machine learning trading algorithm to the cloud. Each week there is a new [video](https://youtu.be/NhcvShzRgE8) & [blog post](https://learnml.co.uk/blog/) released.
 
