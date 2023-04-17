@@ -10,8 +10,6 @@ OANDA_LIVE_HOST = "https://api-fxtrade.oanda.com"
 OANDA_DEMO_HOST = "https://api-fxpractice.oanda.com"
 
 
-
-
 class OANDACandleGranularities(enum.Enum):
     """Allowed timeframes for the OANDA APIs."""
 
@@ -79,6 +77,8 @@ if __name__ == "__main__":
     candles = broker.get_candles(
         "EUR_USD",
         OANDACandleGranularities.H1,
-        time_helpers.Timeframe.from_isoformat("2023-03-29T00:00:00", "2023-03-31T00:00:00"),
+        time_helpers.Timeframe.from_isoformat(
+            "2023-03-29T00:00:00", "2023-03-31T00:00:00"
+        ),
     )
     print(candles)

@@ -23,7 +23,6 @@ class Config:
     """
 
     def __init__(self, config_dict: Dict[str, str]) -> None:
-
         self.env_vars = {}
         for k, v in config_dict.items():
             self.env_vars[k] = os.environ.get(k)

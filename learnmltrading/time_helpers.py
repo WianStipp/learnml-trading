@@ -3,6 +3,7 @@
 import datetime
 from pydantic import BaseModel
 
+
 class Timeframe(BaseModel):
     """Represents a time window"""
 
