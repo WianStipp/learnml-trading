@@ -42,7 +42,7 @@ class OANDABroker(base_broker.Broker):
     def __init__(self, host: str, account: broker_account.OANDAAccount) -> None:
         super().__init__(host=host)
         self.account = account
-
+    
     def get_candles(
         self,
         instrument: str,
@@ -62,7 +62,6 @@ class OANDABroker(base_broker.Broker):
         ) as client:
             response = client.get(os.path.join(self.host, candles_path), params=params)
         response.raise_for_status()
-        response.text
         return response.json()
 
 
